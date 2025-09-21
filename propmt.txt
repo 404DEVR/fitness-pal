@@ -1,0 +1,119 @@
+Got it ✅
+You want a **single detailed prompt** you can feed directly into **Kiro AI IDE (or Gemini API)** so it will generate your **MyFitnessPal-like Next.js app** end-to-end, with **clear workflow + no errors**.
+
+Here’s the ready-to-use prompt for you 👇
+
+---
+
+# 📌 Prompt for Kiro / Gemini to Build the App
+
+**Prompt:**
+
+I want you to build me a full-stack **fitness tracking application** (like MyFitnessPal) using **Next.js (App Router)**, **TypeScript**, **TailwindCSS**, and **shadcn/ui**.
+
+The app should have the following **workflow and features**:
+
+---
+
+## 🔹 Application Workflow
+
+1. **Authentication**
+
+   * Use **NextAuth.js** with credentials (email/password) and Google login.
+   * Users must log in before accessing the dashboard.
+
+2. **User Profile Setup**
+
+   * On first login, prompt user for:
+
+     * Name, Age, Gender
+     * Height (cm), Weight (kg)
+     * Activity Level (Sedentary → Very Active)
+     * Fitness Goal (Lose, Maintain, Gain)
+   * Store this info in the database.
+   * Use **Mifflin-St Jeor Equation** to calculate **daily calorie target** and macro goals.
+
+3. **Meal Logging**
+
+   * A form where users can input a food name/meal (e.g. “2 eggs and toast”).
+   * Backend will:
+
+     1. Call **USDA FoodData Central API** (free) to fetch calories, protein, carbs, fats.
+     2. If not found, fallback to **Gemini API** to estimate macros from description.
+   * Store logged meals in the database with timestamp.
+
+4. **Dashboard**
+
+   * Show daily calories consumed vs. target using a **progress ring or bar**.
+   * Show macro breakdown (protein, carbs, fats) using **charts (Recharts)**.
+   * Display recent meals with macros.
+
+5. **History & Analytics**
+
+   * Users can select a date to view past meals.
+   * Show weekly and monthly calorie/macro trends.
+
+---
+
+## 🔹 Tech Stack Requirements
+
+* **Frontend:**
+
+  * Next.js 14 (App Router) + TypeScript
+  * TailwindCSS + shadcn/ui for UI components
+  * Recharts for graphs
+
+* **Backend:**
+
+  * Next.js API routes
+  * Fetch nutrition info using USDA FoodData Central API (free)
+  * If food not found → fallback to Gemini API call
+
+* **Database:**
+
+  * Supabase (PostgreSQL)
+  * Tables:
+
+    * `users` (id, email, name, age, gender, height, weight, activity\_level, goal, target\_calories, macros)
+    * `meals` (id, user\_id, food\_name, calories, protein, carbs, fat, created\_at)
+
+* **Authentication:**
+
+  * NextAuth.js with Supabase adapter
+
+---
+
+## 🔹 Implementation Rules
+
+* Code must be **error-free** and ready to run after `npm install`.
+* Use best practices for Next.js (App Router, `app/` directory).
+* All components should come from **shadcn/ui** where possible (cards, buttons, inputs, modals, navbar, sidebar).
+* TailwindCSS should be properly configured.
+* Provide sample `.env.local` variables for:
+
+  * NEXTAUTH\_SECRET
+  * SUPABASE\_URL
+  * SUPABASE\_KEY
+  * USDA\_API\_KEY
+  * GEMINI\_API\_KEY
+
+---
+
+✅ Deliver a **working Next.js project** with:
+
+* Auth pages (`/login`, `/register`)
+* Onboarding page for profile setup
+* Dashboard page with calorie/macro tracking
+* Meal logging form + API integration
+* History page for past meals
+
+Make sure the app runs **without errors** when I execute:
+
+```bash
+npm install
+npm run dev
+```
+
+---
+
+Would you like me to also **write you the `.env` setup + Supabase schema SQL** so you can copy-paste and run instantly?
