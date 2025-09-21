@@ -181,7 +181,8 @@ export function WorkoutLogger({ onWorkoutSaved }: WorkoutLoggerProps) {
               </div>
 
               <div className="border rounded-lg overflow-hidden">
-                <div className="grid grid-cols-4 gap-4 p-3 bg-muted font-medium text-sm">
+                {/* Desktop Header */}
+                <div className="hidden sm:grid grid-cols-4 gap-4 p-3 bg-muted font-medium text-sm">
                   <div>Set</div>
                   <div>Weight (kg)</div>
                   <div>Reps</div>
@@ -189,35 +190,78 @@ export function WorkoutLogger({ onWorkoutSaved }: WorkoutLoggerProps) {
                 </div>
                 
                 {sets.map((set, index) => (
-                  <div key={index} className="grid grid-cols-4 gap-4 p-3 border-t">
-                    <div className="flex items-center font-medium">
-                      {set.setNumber}
+                  <div key={index} className="border-t">
+                    {/* Desktop Layout */}
+                    <div className="hidden sm:grid grid-cols-4 gap-4 p-3">
+                      <div className="flex items-center font-medium">
+                        {set.setNumber}
+                      </div>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        placeholder="0"
+                        value={set.weight || ''}
+                        onChange={(e) => updateSet(index, 'weight', e.target.value)}
+                      />
+                      <Input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={set.reps || ''}
+                        onChange={(e) => updateSet(index, 'reps', e.target.value)}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeSet(index)}
+                        disabled={sets.length <= 1}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <Input
-                      type="number"
-                      step="0.5"
-                      min="0"
-                      placeholder="0"
-                      value={set.weight || ''}
-                      onChange={(e) => updateSet(index, 'weight', e.target.value)}
-                    />
-                    <Input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={set.reps || ''}
-                      onChange={(e) => updateSet(index, 'reps', e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeSet(index)}
-                      disabled={sets.length <= 1}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    
+                    {/* Mobile Layout */}
+                    <div className="sm:hidden p-3 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">Set {set.setNumber}</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeSet(index)}
+                          disabled={sets.length <= 1}
+                          className="text-red-500 hover:text-red-700 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-sm text-muted-foreground">Weight (kg)</label>
+                          <Input
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            placeholder="0"
+                            value={set.weight || ''}
+                            onChange={(e) => updateSet(index, 'weight', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm text-muted-foreground">Reps</label>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={set.reps || ''}
+                            onChange={(e) => updateSet(index, 'reps', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -225,20 +269,20 @@ export function WorkoutLogger({ onWorkoutSaved }: WorkoutLoggerProps) {
               {/* Workout Summary */}
               <div className="p-3 bg-muted rounded-lg">
                 <div className="text-sm font-medium mb-2">Workout Summary:</div>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                  <div className="text-center sm:text-left">
                     <div className="font-medium">Total Sets</div>
                     <div className="text-muted-foreground">
                       {sets.filter(s => s.weight > 0 && s.reps > 0).length}
                     </div>
                   </div>
-                  <div>
+                  <div className="text-center sm:text-left">
                     <div className="font-medium">Total Reps</div>
                     <div className="text-muted-foreground">
                       {sets.reduce((sum, set) => sum + (set.reps || 0), 0)}
                     </div>
                   </div>
-                  <div>
+                  <div className="text-center sm:text-left">
                     <div className="font-medium">Total Volume</div>
                     <div className="text-muted-foreground">
                       {sets.reduce((sum, set) => sum + (set.weight || 0) * (set.reps || 0), 0).toFixed(1)} kg

@@ -34,17 +34,17 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
             Track Your Fitness Journey
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-600 mb-8 max-w-2xl mx-auto px-4">
             Monitor your daily nutrition, set personalized goals, and achieve your fitness targets with our comprehensive tracking application.
           </p>
-          <div className="space-x-4">
-            <Button asChild size="lg">
+          <div className="flex flex-col sm:flex-row gap-4 sm:space-x-4 sm:gap-0 justify-center">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link href="/auth/signup">Get Started</Link>
             </Button>
-            <Button variant="outline" size="lg" asChild>
+            <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
               <Link href="/auth/signin">Sign In</Link>
             </Button>
           </div>
@@ -101,13 +101,13 @@ export default function Home() {
         </div>
 
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
             Ready to start your fitness journey?
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
+          <p className="text-base sm:text-lg text-gray-600 mb-8 px-4">
             Join thousands of users who are already tracking their way to better health.
           </p>
-          <Button asChild size="lg">
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link href="/auth/signup">Create Your Account</Link>
           </Button>
         </div>

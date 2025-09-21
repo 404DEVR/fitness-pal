@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Scan } from 'lucide-react';
 import { searchCommonFoods } from '@/lib/common-foods';
+import { BarcodeScanner } from './BarcodeScanner';
+import { ManualBarcodeEntry } from './ManualBarcodeEntry';
 
 interface FoodSuggestion {
   id?: number;
@@ -35,6 +37,8 @@ export function MealForm({ onMealAdded }: MealFormProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedFood, setSelectedFood] = useState<FoodSuggestion | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -100,6 +104,20 @@ export function MealForm({ onMealAdded }: MealFormProps) {
     setFoodName(food.name);
     setSelectedFood(food);
     setShowSuggestions(false);
+  };
+
+  const handleBarcodeScanned = (product: any) => {
+    setFoodName(product.name);
+    setSelectedFood({
+      name: product.name,
+      brand: product.brand,
+      calories: product.calories,
+      protein: product.protein,
+      carbs: product.carbs,
+      fat: product.fat,
+      category: product.category || 'Packaged Food',
+    });
+    setShowScanner(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -187,7 +205,31 @@ export function MealForm({ onMealAdded }: MealFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2 relative">
-            <Label htmlFor="foodName">Food Item</Label>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <Label htmlFor="foodName">Food Item</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowScanner(true)}
+                  className="flex items-center gap-1 flex-1 sm:flex-none"
+                >
+                  <Scan className="h-4 w-4" />
+                  <span>Scan</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowManualEntry(true)}
+                  className="flex items-center gap-1 flex-1 sm:flex-none"
+                >
+                  <Search className="h-4 w-4" />
+                  <span>Barcode</span>
+                </Button>
+              </div>
+            </div>
             <div className="relative">
               <Input
                 ref={inputRef}
@@ -239,7 +281,7 @@ export function MealForm({ onMealAdded }: MealFormProps) {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity (grams)</Label>
               <Input
@@ -274,7 +316,7 @@ export function MealForm({ onMealAdded }: MealFormProps) {
           {selectedFood && quantity && (
             <div className="p-3 bg-muted rounded-lg">
               <div className="text-sm font-medium mb-2">Nutrition Preview ({quantity}g):</div>
-              <div className="grid grid-cols-4 gap-2 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                 <div className="text-center">
                   <div className="font-medium">{Math.round(selectedFood.calories * parseFloat(quantity) / 100)}</div>
                   <div className="text-muted-foreground">kcal</div>
@@ -310,6 +352,22 @@ export function MealForm({ onMealAdded }: MealFormProps) {
             )}
           </Button>
         </form>
+
+        {/* Barcode Scanner Modal */}
+        {showScanner && (
+          <BarcodeScanner
+            onProductScanned={handleBarcodeScanned}
+            onClose={() => setShowScanner(false)}
+          />
+        )}
+
+        {/* Manual Barcode Entry Modal */}
+        {showManualEntry && (
+          <ManualBarcodeEntry
+            onProductFound={handleBarcodeScanned}
+            onClose={() => setShowManualEntry(false)}
+          />
+        )}
       </CardContent>
     </Card>
   );

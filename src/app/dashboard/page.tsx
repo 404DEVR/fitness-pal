@@ -137,7 +137,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 lg:py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold">Welcome back, {user.name || 'User'}!</h1>
           <p className="text-muted-foreground">
@@ -145,19 +145,21 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
+          <div className="xl:col-span-2 space-y-4 lg:space-y-6">
             <CalorieProgress stats={dailyStats} />
-            <MacroChart stats={dailyStats} />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              <MacroChart stats={dailyStats} />
+              {user.current_weight && user.target_weight && (
+                <WeightProgress user={user} onWeightLogged={handleWeightLogged} />
+              )}
+            </div>
             {user.current_weight && user.target_weight && (
               <WeightChart weightLogs={weightLogs} targetWeight={user.target_weight} />
             )}
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4 lg:space-y-6">
             <MealForm onMealAdded={handleMealAdded} />
-            {user.current_weight && user.target_weight && (
-              <WeightProgress user={user} onWeightLogged={handleWeightLogged} />
-            )}
           </div>
         </div>
 

@@ -109,9 +109,9 @@ export default function History() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-4">Meal History</h1>
+      <div className="container mx-auto px-4 py-4 lg:py-8">
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold mb-4">Meal History</h1>
           
           <div className="max-w-xs">
             <Label htmlFor="date">Select Date</Label>
@@ -125,43 +125,43 @@ export default function History() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-6 lg:mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total Calories</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Calories</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totalCalories)}</div>
+              <div className="text-xl sm:text-2xl font-bold">{Math.round(totalCalories)}</div>
               <p className="text-xs text-muted-foreground">kcal</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Protein</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Protein</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totalProtein)}</div>
+              <div className="text-xl sm:text-2xl font-bold">{Math.round(totalProtein)}</div>
               <p className="text-xs text-muted-foreground">grams</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Carbs</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Carbs</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totalCarbs)}</div>
+              <div className="text-xl sm:text-2xl font-bold">{Math.round(totalCarbs)}</div>
               <p className="text-xs text-muted-foreground">grams</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Fat</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Fat</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{Math.round(totalFat)}</div>
+              <div className="text-xl sm:text-2xl font-bold">{Math.round(totalFat)}</div>
               <p className="text-xs text-muted-foreground">grams</p>
             </CardContent>
           </Card>
@@ -188,21 +188,26 @@ export default function History() {
                 {meals.map((meal) => (
                   <div
                     key={meal.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3"
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
                         <h4 className="font-medium">{meal.food_name}</h4>
-                        <Badge className={getMealTypeColor(meal.meal_type)}>
-                          {meal.meal_type}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getMealTypeColor(meal.meal_type)}>
+                            {meal.meal_type}
+                          </Badge>
+                          <div className="text-sm text-muted-foreground sm:hidden">
+                            {format(new Date(meal.created_at), 'HH:mm')}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground hidden sm:block">
                         {format(new Date(meal.created_at), 'HH:mm')}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-right">
+                    <div className="flex items-center justify-between sm:gap-3">
+                      <div className="text-left sm:text-right">
                         <div className="font-medium text-lg">{Math.round(meal.calories)} kcal</div>
                         <div className="text-sm text-muted-foreground">
                           P: {Math.round(meal.protein)}g | C: {Math.round(meal.carbs)}g | F: {Math.round(meal.fat)}g

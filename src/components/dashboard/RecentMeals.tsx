@@ -75,21 +75,26 @@ export function RecentMeals({ meals, onMealDeleted }: RecentMealsProps) {
             {meals.map((meal) => (
               <div
                 key={meal.id}
-                className="flex items-center justify-between p-3 border rounded-lg"
+                className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg gap-2"
               >
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
                     <h4 className="font-medium">{meal.food_name}</h4>
-                    <Badge className={getMealTypeColor(meal.meal_type)}>
-                      {meal.meal_type}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className={getMealTypeColor(meal.meal_type)}>
+                        {meal.meal_type}
+                      </Badge>
+                      <div className="text-sm text-muted-foreground sm:hidden">
+                        {format(new Date(meal.created_at), 'HH:mm')}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-muted-foreground hidden sm:block">
                     {format(new Date(meal.created_at), 'HH:mm')}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
+                <div className="flex items-center justify-between sm:gap-3">
+                  <div className="text-left sm:text-right">
                     <div className="font-medium">{Math.round(meal.calories)} kcal</div>
                     <div className="text-xs text-muted-foreground">
                       P: {Math.round(meal.protein)}g | C: {Math.round(meal.carbs)}g | F: {Math.round(meal.fat)}g

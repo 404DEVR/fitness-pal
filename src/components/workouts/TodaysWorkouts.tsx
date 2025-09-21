@@ -166,7 +166,7 @@ export function TodaysWorkouts({ workouts, onWorkoutUpdated }: TodaysWorkoutsPro
             return (
               <div key={workoutName} className="border rounded-lg p-4 bg-card">
                 {/* Workout Header */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
                     <h3 className="font-semibold text-lg">{workoutName}</h3>
@@ -176,18 +176,18 @@ export function TodaysWorkouts({ workouts, onWorkoutUpdated }: TodaysWorkoutsPro
                   </div>
                   
                   {/* Workout Summary */}
-                  <div className="flex gap-4 text-sm text-muted-foreground">
+                  <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-4 text-sm text-muted-foreground">
                     <div className="text-center">
                       <div className="font-medium text-foreground">{maxWeight}kg</div>
-                      <div>Max Weight</div>
+                      <div className="text-xs sm:text-sm">Max Weight</div>
                     </div>
                     <div className="text-center">
                       <div className="font-medium text-foreground">{totalReps}</div>
-                      <div>Total Reps</div>
+                      <div className="text-xs sm:text-sm">Total Reps</div>
                     </div>
                     <div className="text-center">
                       <div className="font-medium text-foreground">{totalVolume.toFixed(0)}kg</div>
-                      <div>Volume</div>
+                      <div className="text-xs sm:text-sm">Volume</div>
                     </div>
                   </div>
                 </div>
@@ -200,9 +200,9 @@ export function TodaysWorkouts({ workouts, onWorkoutUpdated }: TodaysWorkoutsPro
                       <div key={set.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         {editingWorkout === set.id ? (
                           // Edit Mode
-                          <div className="flex items-center gap-3 flex-1">
-                            <span className="font-medium w-12">Set {set.set_number}:</span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
+                            <span className="font-medium">Set {set.set_number}:</span>
+                            <div className="flex items-center gap-2 flex-1">
                               <Input
                                 type="number"
                                 step="0.5"
@@ -221,7 +221,7 @@ export function TodaysWorkouts({ workouts, onWorkoutUpdated }: TodaysWorkoutsPro
                               />
                               <span className="text-sm text-muted-foreground">reps</span>
                             </div>
-                            <div className="flex items-center gap-1 ml-auto">
+                            <div className="flex items-center gap-1 sm:ml-auto">
                               <Button
                                 size="sm"
                                 onClick={() => saveEdit(set.id)}
@@ -244,7 +244,7 @@ export function TodaysWorkouts({ workouts, onWorkoutUpdated }: TodaysWorkoutsPro
                         ) : (
                           // View Mode
                           <>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                               <span className="font-medium">Set {set.set_number}:</span>
                               <span className="text-lg">
                                 <span className="font-semibold">{set.weight}kg</span>

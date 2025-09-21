@@ -60,10 +60,10 @@ export default function WorkoutsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Dumbbell className="h-8 w-8" />
+      <div className="container mx-auto px-4 py-4 lg:py-8">
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
+            <Dumbbell className="h-6 w-6 lg:h-8 lg:w-8" />
             Workout Tracker
           </h1>
           <p className="text-muted-foreground">
@@ -71,14 +71,14 @@ export default function WorkoutsPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 lg:gap-6 mb-6 lg:mb-8">
           {/* Workout Logger */}
-          <div className="lg:col-span-1">
+          <div className="xl:col-span-1 order-2 xl:order-1">
             <WorkoutLogger onWorkoutSaved={handleWorkoutSaved} />
           </div>
 
           {/* Progress Charts */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-2 order-1 xl:order-2">
             <WorkoutProgress refreshTrigger={refreshTrigger} />
           </div>
         </div>

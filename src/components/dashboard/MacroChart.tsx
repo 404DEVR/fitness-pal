@@ -79,9 +79,9 @@ export function MacroChart({ stats }: MacroChartProps) {
           </ResponsiveContainer>
         </div>
         
-        <div className="grid grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           {data.map((macro) => (
-            <div key={macro.name} className="text-center">
+            <div key={macro.name} className="text-center p-2 bg-muted/50 rounded-lg">
               <div className="text-sm font-medium" style={{ color: macro.color }}>
                 {macro.name}
               </div>
