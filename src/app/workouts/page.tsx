@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation';
 import { WorkoutLogger } from '@/components/workouts/WorkoutLogger';
 import { WorkoutProgress } from '@/components/workouts/WorkoutProgress';
 import { TodaysWorkouts } from '@/components/workouts/TodaysWorkouts';
-import { Workout } from '@/types';
+import { WorkoutSession } from '@/types';
 import { Dumbbell } from 'lucide-react';
 
 export default function WorkoutsPage() {
   const { status } = useSession();
   const router = useRouter();
-  const [todaysWorkouts, setTodaysWorkouts] = useState<Workout[]>([]);
+  const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,13 +29,13 @@ export default function WorkoutsPage() {
 
   const fetchTodaysWorkouts = async () => {
     try {
-      const response = await fetch('/api/workouts?limit=50'); // Get more to filter today's
+      const response = await fetch('/api/workouts?limit=50'); // Get recent workout sessions
       if (response.ok) {
-        const workouts = await response.json();
-        setTodaysWorkouts(workouts);
+        const sessions = await response.json();
+        setWorkoutSessions(sessions);
       }
     } catch (error) {
-      console.error('Failed to fetch workouts:', error);
+      console.error('Failed to fetch workout sessions:', error);
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +85,7 @@ export default function WorkoutsPage() {
 
         {/* Today's Workouts */}
         <TodaysWorkouts 
-          workouts={todaysWorkouts} 
+          workoutSessions={workoutSessions} 
           onWorkoutUpdated={handleWorkoutSaved}
         />
       </div>

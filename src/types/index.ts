@@ -78,11 +78,28 @@ export interface WeightProgress {
 }
 
 export interface WorkoutSet {
-  setNumber: number;
   weight: number;
   reps: number;
+  rest_seconds?: number;
 }
 
+export interface WorkoutExercise {
+  name: string;
+  sets: WorkoutSet[];
+}
+
+export interface WorkoutSession {
+  id: string;
+  user_id: string;
+  workout_name: string;
+  exercises: WorkoutExercise[];
+  notes?: string;
+  duration_minutes?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Legacy interface for backward compatibility if needed
 export interface Workout {
   id: string;
   user_id: string;
@@ -92,12 +109,6 @@ export interface Workout {
   reps: number;
   notes?: string;
   created_at: string;
-}
-
-export interface WorkoutSession {
-  workout_name: string;
-  sets: WorkoutSet[];
-  date: string;
 }
 
 export interface CalorieAdjustment {

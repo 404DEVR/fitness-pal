@@ -13,10 +13,15 @@ interface ProgressData {
   maxWeight: number;
   totalVolume: number;
   totalReps: number;
-  sets: Array<{
-    setNumber: number;
-    weight: number;
-    reps: number;
+  exercises: Array<{
+    name: string;
+    sets: Array<{
+      weight: number;
+      reps: number;
+    }>;
+    volume: number;
+    maxWeight: number;
+    totalReps: number;
   }>;
 }
 
@@ -82,7 +87,7 @@ export function WorkoutProgress({ refreshTrigger }: WorkoutProgressProps) {
     maxWeight: session.maxWeight,
     totalVolume: session.totalVolume,
     totalReps: session.totalReps,
-    sets: session.sets.length,
+    sets: session.exercises?.reduce((total: number, exercise: any) => total + (exercise.sets?.length || 0), 0) || 0,
   }));
 
   const CustomTooltip = ({ active, payload, label }: any) => {

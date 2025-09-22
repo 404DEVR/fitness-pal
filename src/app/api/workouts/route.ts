@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
 
     let query = supabaseAdmin
-      .from('workouts')
+      .from('workout_sessions')
       .select('*')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
@@ -26,17 +26,17 @@ export async function GET(request: NextRequest) {
       query = query.eq('workout_name', workoutName);
     }
 
-    const { data: workouts, error } = await query;
+    const { data: workoutSessions, error } = await query;
 
     if (error) {
       throw error;
     }
 
-    return NextResponse.json(workouts);
+    return NextResponse.json(workoutSessions);
   } catch (error) {
-    console.error('Get workouts error:', error);
+    console.error('Get workout sessions error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch workouts' },
+      { error: 'Failed to fetch workout sessions' },
       { status: 500 }
     );
   }
@@ -50,52 +50,61 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { workout_name, sets, notes } = await request.json();
+    const { workout_name, exercises, notes, duration_minutes } = await request.json();
 
-    if (!workout_name || !sets || !Array.isArray(sets) || sets.length === 0) {
+    if (!workout_name || !exercises || !Array.isArray(exercises) || exercises.length === 0) {
       return NextResponse.json(
-        { error: 'Workout name and sets are required' },
+        { error: 'Workout name and exercises are required' },
         { status: 400 }
       );
     }
 
-    // Validate sets data
-    for (const set of sets) {
-      if (!set.weight || !set.reps || set.weight <= 0 || set.reps <= 0) {
+    // Validate exercises data
+    for (const exercise of exercises) {
+      if (!exercise.name || !exercise.sets || !Array.isArray(exercise.sets) || exercise.sets.length === 0) {
         return NextResponse.json(
-          { error: 'All sets must have valid weight and reps' },
+          { error: 'Each exercise must have a name and at least one set' },
           { status: 400 }
         );
       }
+
+      for (const set of exercise.sets) {
+        if (!set.weight || !set.reps || set.weight <= 0 || set.reps <= 0) {
+          return NextResponse.json(
+            { error: 'All sets must have valid weight and reps' },
+            { status: 400 }
+          );
+        }
+      }
     }
 
-    // Insert all sets for this workout session
-    const workoutData = sets.map((set: any, index: number) => ({
+    // Insert workout session as a single row
+    const workoutSessionData = {
       user_id: session.user.id,
       workout_name,
-      set_number: index + 1,
-      weight: parseFloat(set.weight),
-      reps: parseInt(set.reps),
+      exercises,
       notes: notes || null,
-    }));
+      duration_minutes: duration_minutes || null,
+    };
 
-    const { data: savedWorkouts, error } = await supabaseAdmin
-      .from('workouts')
-      .insert(workoutData)
-      .select();
+    const { data: savedWorkoutSession, error } = await supabaseAdmin
+      .from('workout_sessions')
+      .insert(workoutSessionData)
+      .select()
+      .single();
 
     if (error) {
       throw error;
     }
 
     return NextResponse.json({
-      message: 'Workout saved successfully',
-      workouts: savedWorkouts
+      message: 'Workout session saved successfully',
+      workoutSession: savedWorkoutSession
     });
   } catch (error) {
-    console.error('Create workout error:', error);
+    console.error('Create workout session error:', error);
     return NextResponse.json(
-      { error: 'Failed to save workout' },
+      { error: 'Failed to save workout session' },
       { status: 500 }
     );
   }

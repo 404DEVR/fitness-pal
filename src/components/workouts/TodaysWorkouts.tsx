@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Workout } from '@/types';
+import { WorkoutSession } from '@/types';
 import { format } from 'date-fns';
 import { 
   Calendar, 
@@ -17,7 +17,8 @@ import {
   MoreVertical,
   TrendingUp,
   Weight,
-  RotateCcw
+  RotateCcw,
+  Clock
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -27,103 +28,44 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 interface TodaysWorkoutsProps {
-  workouts: Workout[];
+  workoutSessions: WorkoutSession[];
   onWorkoutUpdated: () => void;
 }
 
-export function TodaysWorkouts({ workouts, onWorkoutUpdated }: TodaysWorkoutsProps) {
-  const [editingWorkout, setEditingWorkout] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<{ weight: string; reps: string; notes: string }>({
-    weight: '',
-    reps: '',
-    notes: '',
-  });
+export function TodaysWorkouts({ workoutSessions, onWorkoutUpdated }: TodaysWorkoutsProps) {
+  const [editingSession, setEditingSession] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [deletingWorkout, setDeletingWorkout] = useState<string | null>(null);
+  const [deletingSession, setDeletingSession] = useState<string | null>(null);
 
-  // Filter to today's workouts only
+  // Filter to today's workout sessions only
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todaysWorkouts = workouts.filter(workout => 
-    format(new Date(workout.created_at), 'yyyy-MM-dd') === today
+  const todaysWorkoutSessions = workoutSessions.filter(session => 
+    format(new Date(session.created_at), 'yyyy-MM-dd') === today
   );
 
-  // Group by workout name
-  const workoutsByName = todaysWorkouts.reduce((acc: any, workout) => {
-    if (!acc[workout.workout_name]) {
-      acc[workout.workout_name] = [];
-    }
-    acc[workout.workout_name].push(workout);
-    return acc;
-  }, {});
+  const deleteWorkoutSession = async (sessionId: string) => {
+    if (!confirm('Are you sure you want to delete this entire workout session?')) return;
 
-  const startEdit = (workout: Workout) => {
-    setEditingWorkout(workout.id);
-    setEditValues({
-      weight: workout.weight.toString(),
-      reps: workout.reps.toString(),
-      notes: workout.notes || '',
-    });
-  };
-
-  const cancelEdit = () => {
-    setEditingWorkout(null);
-    setEditValues({ weight: '', reps: '', notes: '' });
-  };
-
-  const saveEdit = async (workoutId: string) => {
-    if (!editValues.weight || !editValues.reps) return;
-
-    setIsUpdating(true);
+    setDeletingSession(sessionId);
     try {
-      const response = await fetch(`/api/workouts/${workoutId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          weight: parseFloat(editValues.weight),
-          reps: parseInt(editValues.reps),
-          notes: editValues.notes,
-        }),
-      });
-
-      if (response.ok) {
-        setEditingWorkout(null);
-        onWorkoutUpdated();
-      } else {
-        alert('Failed to update workout');
-      }
-    } catch (error) {
-      console.error('Failed to update workout:', error);
-      alert('Failed to update workout');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const deleteWorkout = async (workoutId: string) => {
-    if (!confirm('Are you sure you want to delete this set?')) return;
-
-    setDeletingWorkout(workoutId);
-    try {
-      const response = await fetch(`/api/workouts/${workoutId}`, {
+      const response = await fetch(`/api/workouts/${sessionId}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         onWorkoutUpdated();
       } else {
-        alert('Failed to delete workout');
+        alert('Failed to delete workout session');
       }
     } catch (error) {
-      console.error('Failed to delete workout:', error);
-      alert('Failed to delete workout');
+      console.error('Failed to delete workout session:', error);
+      alert('Failed to delete workout session');
     } finally {
-      setDeletingWorkout(null);
+      setDeletingSession(null);
     }
   };
 
-  if (Object.keys(workoutsByName).length === 0) {
+  if (todaysWorkoutSessions.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -156,141 +98,106 @@ export function TodaysWorkouts({ workouts, onWorkoutUpdated }: TodaysWorkoutsPro
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {Object.entries(workoutsByName).map(([workoutName, sets]: [string, any]) => {
-            const totalVolume = sets.reduce((sum: number, set: Workout) => 
-              sum + (set.weight * set.reps), 0
+          {todaysWorkoutSessions.map((session) => {
+            // Calculate session totals
+            const totalVolume = session.exercises.reduce((sum, exercise) => 
+              sum + exercise.sets.reduce((setSum, set) => setSum + (set.weight * set.reps), 0), 0
             );
-            const maxWeight = Math.max(...sets.map((set: Workout) => set.weight));
-            const totalReps = sets.reduce((sum: number, set: Workout) => sum + set.reps, 0);
+            const totalExercises = session.exercises.length;
+            const totalSets = session.exercises.reduce((sum, exercise) => sum + exercise.sets.length, 0);
 
             return (
-              <div key={workoutName} className="border rounded-lg p-4 bg-card">
-                {/* Workout Header */}
+              <div key={session.id} className="border rounded-lg p-4 bg-card">
+                {/* Session Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-lg">{workoutName}</h3>
+                    <h3 className="font-semibold text-lg">{session.workout_name}</h3>
                     <Badge variant="secondary">
-                      {sets.length} set{sets.length !== 1 ? 's' : ''}
+                      {totalExercises} exercise{totalExercises !== 1 ? 's' : ''}
                     </Badge>
+                    {session.duration_minutes && (
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {session.duration_minutes}m
+                      </Badge>
+                    )}
                   </div>
                   
-                  {/* Workout Summary */}
+                  {/* Session Summary */}
                   <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-4 text-sm text-muted-foreground">
                     <div className="text-center">
-                      <div className="font-medium text-foreground">{maxWeight}kg</div>
-                      <div className="text-xs sm:text-sm">Max Weight</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-medium text-foreground">{totalReps}</div>
-                      <div className="text-xs sm:text-sm">Total Reps</div>
+                      <div className="font-medium text-foreground">{totalSets}</div>
+                      <div className="text-xs sm:text-sm">Total Sets</div>
                     </div>
                     <div className="text-center">
                       <div className="font-medium text-foreground">{totalVolume.toFixed(0)}kg</div>
                       <div className="text-xs sm:text-sm">Volume</div>
                     </div>
+                    <div className="text-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => deleteWorkoutSession(session.id)}
+                            disabled={deletingSession === session.id}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            {deletingSession === session.id ? 'Deleting...' : 'Delete Session'}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
 
-                {/* Sets List */}
-                <div className="space-y-2">
-                  {sets
-                    .sort((a: Workout, b: Workout) => a.set_number - b.set_number)
-                    .map((set: Workout) => (
-                      <div key={set.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        {editingWorkout === set.id ? (
-                          // Edit Mode
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-3 flex-1">
-                            <span className="font-medium">Set {set.set_number}:</span>
-                            <div className="flex items-center gap-2 flex-1">
-                              <Input
-                                type="number"
-                                step="0.5"
-                                value={editValues.weight}
-                                onChange={(e) => setEditValues(prev => ({ ...prev, weight: e.target.value }))}
-                                className="w-20 h-8"
-                                placeholder="Weight"
-                              />
-                              <span className="text-sm text-muted-foreground">kg ×</span>
-                              <Input
-                                type="number"
-                                value={editValues.reps}
-                                onChange={(e) => setEditValues(prev => ({ ...prev, reps: e.target.value }))}
-                                className="w-16 h-8"
-                                placeholder="Reps"
-                              />
-                              <span className="text-sm text-muted-foreground">reps</span>
-                            </div>
-                            <div className="flex items-center gap-1 sm:ml-auto">
-                              <Button
-                                size="sm"
-                                onClick={() => saveEdit(set.id)}
-                                disabled={isUpdating}
-                                className="h-8 w-8 p-0"
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={cancelEdit}
-                                disabled={isUpdating}
-                                className="h-8 w-8 p-0"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
+                {/* Exercises List */}
+                <div className="space-y-4">
+                  {session.exercises.map((exercise, exerciseIndex) => (
+                    <div key={exerciseIndex} className="pl-4 border-l-2 border-muted">
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        {exercise.name}
+                        <Badge variant="outline" className="text-xs">
+                          {exercise.sets.length} set{exercise.sets.length !== 1 ? 's' : ''}
+                        </Badge>
+                      </h4>
+                      
+                      <div className="space-y-1">
+                        {exercise.sets.map((set, setIndex) => (
+                          <div key={setIndex} className="flex items-center justify-between p-2 bg-muted/50 rounded text-sm">
+                            <span>
+                              Set {setIndex + 1}: <span className="font-semibold">{set.weight}kg</span>
+                              <span className="text-muted-foreground mx-1">×</span>
+                              <span className="font-semibold">{set.reps}</span>
+                              <span className="text-muted-foreground ml-1">reps</span>
+                            </span>
+                            <Badge variant="outline" className="text-xs">
+                              {(set.weight * set.reps).toFixed(0)}kg
+                            </Badge>
                           </div>
-                        ) : (
-                          // View Mode
-                          <>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                              <span className="font-medium">Set {set.set_number}:</span>
-                              <span className="text-lg">
-                                <span className="font-semibold">{set.weight}kg</span>
-                                <span className="text-muted-foreground mx-2">×</span>
-                                <span className="font-semibold">{set.reps}</span>
-                                <span className="text-muted-foreground ml-1">reps</span>
-                              </span>
-                              <Badge variant="outline" className="text-xs">
-                                {(set.weight * set.reps).toFixed(0)}kg volume
-                              </Badge>
-                            </div>
-                            
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => startEdit(set)}>
-                                  <Edit3 className="mr-2 h-4 w-4" />
-                                  Edit Set
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => deleteWorkout(set.id)}
-                                  disabled={deletingWorkout === set.id}
-                                  className="text-red-600 focus:text-red-600"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  {deletingWorkout === set.id ? 'Deleting...' : 'Delete Set'}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </>
-                        )}
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
 
-                {/* Notes */}
-                {sets[0]?.notes && (
-                  <div className="mt-3 p-2 bg-muted/50 rounded text-sm">
+                {/* Session Notes */}
+                {session.notes && (
+                  <div className="mt-4 p-3 bg-muted/50 rounded text-sm">
                     <span className="font-medium">Notes: </span>
-                    {sets[0].notes}
+                    {session.notes}
                   </div>
                 )}
+
+                {/* Session Time */}
+                <div className="mt-3 text-xs text-muted-foreground">
+                  Completed at {format(new Date(session.created_at), 'h:mm a')}
+                </div>
               </div>
             );
           })}
