@@ -31,6 +31,7 @@ export function MealForm({ onMealAdded }: MealFormProps) {
   const [foodName, setFoodName] = useState('');
   const [mealType, setMealType] = useState('');
   const [quantity, setQuantity] = useState('100');
+  const [quantityType, setQuantityType] = useState('grams');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
@@ -120,6 +121,60 @@ export function MealForm({ onMealAdded }: MealFormProps) {
     setShowScanner(false);
   };
 
+  const getQuantityMultiplier = () => {
+    const qty = parseFloat(quantity);
+    
+    switch (quantityType) {
+      case 'grams':
+        return qty / 100; // Convert to per-gram multiplier
+      case 'pieces':
+        // Estimate average piece weights for common foods
+        const pieceWeights: { [key: string]: number } = {
+          'roti': 30, 'chapati': 30, 'naan': 60, 'paratha': 50,
+          'bread': 25, 'slice': 25, 'biscuit': 15, 'cookie': 15,
+          'apple': 150, 'banana': 120, 'orange': 130, 'egg': 50,
+          'samosa': 40, 'pakora': 20, 'idli': 35, 'dosa': 80
+        };
+        
+        const foodLower = foodName.toLowerCase();
+        let estimatedWeight = 50; // Default weight per piece
+        
+        for (const [food, weight] of Object.entries(pieceWeights)) {
+          if (foodLower.includes(food)) {
+            estimatedWeight = weight;
+            break;
+          }
+        }
+        
+        return (qty * estimatedWeight) / 100;
+      case 'cups':
+        // Convert cups to grams (approximate)
+        return (qty * 240) / 100; // 1 cup ≈ 240g for most foods
+      case 'tablespoons':
+        return (qty * 15) / 100; // 1 tbsp ≈ 15g
+      case 'teaspoons':
+        return (qty * 5) / 100; // 1 tsp ≈ 5g
+      default:
+        return qty / 100;
+    }
+  };
+
+  const getServingSizeText = () => {
+    const qty = quantity;
+    switch (quantityType) {
+      case 'pieces':
+        return `${qty} piece${qty !== '1' ? 's' : ''}`;
+      case 'cups':
+        return `${qty} cup${qty !== '1' ? 's' : ''}`;
+      case 'tablespoons':
+        return `${qty} tbsp`;
+      case 'teaspoons':
+        return `${qty} tsp`;
+      default:
+        return `${qty}g`;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!foodName.trim() || !mealType || !quantity) return;
@@ -129,7 +184,7 @@ export function MealForm({ onMealAdded }: MealFormProps) {
 
     try {
       let nutrition;
-      const quantityMultiplier = parseFloat(quantity) / 100; // Convert to per-gram multiplier
+      const quantityMultiplier = getQuantityMultiplier();
 
       if (selectedFood) {
         // Use selected food's nutrition data
@@ -169,13 +224,13 @@ export function MealForm({ onMealAdded }: MealFormProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          food_name: `${foodName} (${quantity}g)`,
+          food_name: `${foodName} (${getServingSizeText()})`,
           meal_type: mealType,
           calories: nutrition.calories,
           protein: nutrition.protein,
           carbs: nutrition.carbs,
           fat: nutrition.fat,
-          serving_size: `${quantity}g`,
+          serving_size: getServingSizeText(),
         }),
       });
 
@@ -187,6 +242,7 @@ export function MealForm({ onMealAdded }: MealFormProps) {
       setFoodName('');
       setMealType('');
       setQuantity('100');
+      setQuantityType('grams');
       setSelectedFood(null);
       setSuggestions([]);
       onMealAdded();
@@ -283,16 +339,64 @@ export function MealForm({ onMealAdded }: MealFormProps) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity (grams)</Label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                placeholder="100"
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
-                required
-              />
+              <Label htmlFor="quantity">Quantity</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  placeholder={
+                    quantityType === 'pieces' ? '2' :
+                    quantityType === 'cups' ? '1' :
+                    quantityType === 'tablespoons' ? '2' :
+                    quantityType === 'teaspoons' ? '1' : '100'
+                  }
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <Select value={quantityType} onValueChange={(value) => {
+                  setQuantityType(value);
+                  // Update default quantity based on type
+                  if (value === 'pieces') setQuantity('2');
+                  else if (value === 'cups') setQuantity('1');
+                  else if (value === 'tablespoons') setQuantity('2');
+                  else if (value === 'teaspoons') setQuantity('1');
+                  else setQuantity('100');
+                }}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="grams">Grams</SelectItem>
+                    <SelectItem value="pieces">Pieces</SelectItem>
+                    <SelectItem value="cups">Cups</SelectItem>
+                    <SelectItem value="tablespoons">Tbsp</SelectItem>
+                    <SelectItem value="teaspoons">Tsp</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {quantityType === 'pieces' && (
+                <p className="text-xs text-muted-foreground">
+                  Use for items like rotis, bread slices, fruits, etc.
+                </p>
+              )}
+              {quantityType === 'cups' && (
+                <p className="text-xs text-muted-foreground">
+                  Use for rice, dal, vegetables, liquids, etc.
+                </p>
+              )}
+              {quantityType === 'tablespoons' && (
+                <p className="text-xs text-muted-foreground">
+                  Use for oils, ghee, sauces, etc.
+                </p>
+              )}
+              {quantityType === 'teaspoons' && (
+                <p className="text-xs text-muted-foreground">
+                  Use for spices, sugar, small amounts, etc.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -315,22 +419,22 @@ export function MealForm({ onMealAdded }: MealFormProps) {
           {/* Nutrition Preview */}
           {selectedFood && quantity && (
             <div className="p-3 bg-muted rounded-lg">
-              <div className="text-sm font-medium mb-2">Nutrition Preview ({quantity}g):</div>
+              <div className="text-sm font-medium mb-2">Nutrition Preview ({getServingSizeText()}):</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                 <div className="text-center">
-                  <div className="font-medium">{Math.round(selectedFood.calories * parseFloat(quantity) / 100)}</div>
+                  <div className="font-medium">{Math.round(selectedFood.calories * getQuantityMultiplier())}</div>
                   <div className="text-muted-foreground">kcal</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-medium">{Math.round(selectedFood.protein * parseFloat(quantity) / 100)}g</div>
+                  <div className="font-medium">{Math.round(selectedFood.protein * getQuantityMultiplier())}g</div>
                   <div className="text-muted-foreground">protein</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-medium">{Math.round(selectedFood.carbs * parseFloat(quantity) / 100)}g</div>
+                  <div className="font-medium">{Math.round(selectedFood.carbs * getQuantityMultiplier())}g</div>
                   <div className="text-muted-foreground">carbs</div>
                 </div>
                 <div className="text-center">
-                  <div className="font-medium">{Math.round(selectedFood.fat * parseFloat(quantity) / 100)}g</div>
+                  <div className="font-medium">{Math.round(selectedFood.fat * getQuantityMultiplier())}g</div>
                   <div className="text-muted-foreground">fat</div>
                 </div>
               </div>
