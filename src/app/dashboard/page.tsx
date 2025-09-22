@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { CalorieProgress } from '@/components/dashboard/CalorieProgress';
 import { MacroChart } from '@/components/dashboard/MacroChart';
+import { MacroProgressBars } from '@/components/dashboard/MacroProgressBars';
 import { MealForm } from '@/components/dashboard/MealForm';
 import { RecentMeals } from '@/components/dashboard/RecentMeals';
 import { WeightProgress } from '@/components/dashboard/WeightProgress';
@@ -154,6 +155,7 @@ export default function Dashboard() {
                 <WeightProgress user={user} onWeightLogged={handleWeightLogged} />
               )}
             </div>
+            <MacroProgressBars stats={dailyStats} />
             {user.current_weight && user.target_weight && (
               <WeightChart weightLogs={weightLogs} targetWeight={user.target_weight} />
             )}

@@ -8,7 +8,7 @@ export interface User {
   current_weight?: number; // kg - current weight
   target_weight?: number; // kg - desired weight
   activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active' | 'extremely_active';
-  fitness_goal?: 'lose' | 'maintain' | 'gain';
+  fitness_goal?: 'lose' | 'maintain' | 'gain' | 'recomposition';
   target_calories?: number;
   target_protein?: number;
   target_carbs?: number;
@@ -97,4 +97,31 @@ export interface WorkoutSession {
   workout_name: string;
   sets: WorkoutSet[];
   date: string;
+}
+
+export interface CalorieAdjustment {
+  value: string;
+  label: string;
+  adjustment: number;
+}
+
+export interface BasePlan {
+  maintenanceCalories: number;
+  goalCalories: number;
+  goalName: string;
+  macros: {
+    protein: { grams: number; percentage: number };
+    carbs: { grams: number; percentage: number };
+    fat: { grams: number; percentage: number };
+  };
+}
+
+export interface AdjustedPlan {
+  adjustedCalories: number;
+  expectedWeeklyChange: string;
+  macros: {
+    protein: { grams: number; percentage: number };
+    carbs: { grams: number; percentage: number };
+    fat: { grams: number; percentage: number };
+  };
 }

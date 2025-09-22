@@ -72,7 +72,7 @@ export async function PUT(request: NextRequest) {
         profileData.current_weight,
         profileData.target_weight
       );
-      const macros = calculateMacros(targetCalories);
+      const macros = calculateMacros(targetCalories, profileData.fitness_goal);
       
       nutritionTargets = {
         target_calories: targetCalories,

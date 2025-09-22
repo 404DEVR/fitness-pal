@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { User, Edit3, Save, X, Target, TrendingUp, Calendar, Award } from 'lucide-react';
-import { User as UserType } from '@/types';
+import { User, Edit3, Save, X, Target, TrendingUp, Calendar } from 'lucide-react';
+import { User as UserType, AdjustedPlan, BasePlan } from '@/types';
 import { activityLevels, fitnessGoals } from '@/lib/calculations';
 import { format } from 'date-fns';
+import CalorieMacroPlanner from '@/components/profile/CalorieMacroPlanner';
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -117,6 +118,62 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+  const handleImplementAdjustment = async (adjustedPlan: AdjustedPlan) => {
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          target_calories: adjustedPlan.adjustedCalories,
+          target_protein: adjustedPlan.macros.protein.grams,
+          target_carbs: adjustedPlan.macros.carbs.grams,
+          target_fat: adjustedPlan.macros.fat.grams,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser);
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Failed to implement adjustment:', error);
+      alert('Failed to implement changes. Please try again.');
+      throw error;
+    }
+  };
+
+  const handleRevertToBase = async (basePlan: BasePlan) => {
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          target_calories: basePlan.goalCalories,
+          target_protein: basePlan.macros.protein.grams,
+          target_carbs: basePlan.macros.carbs.grams,
+          target_fat: basePlan.macros.fat.grams,
+        }),
+      });
+
+      if (response.ok) {
+        const updatedUser = await response.json();
+        setUser(updatedUser);
+      } else {
+        throw new Error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Failed to revert to base:', error);
+      alert('Failed to revert changes. Please try again.');
+      throw error;
+    }
+  };
+
   if (status === 'loading' || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -140,7 +197,7 @@ export default function ProfilePage() {
 
   const activityLevelLabel = activityLevels.find(level => level.value === user.activity_level)?.label;
   const fitnessGoalLabel = fitnessGoals.find(goal => goal.value === user.fitness_goal)?.label;
-  const weightDifference = user.current_weight && user.target_weight ? 
+  const weightDifference = user.current_weight && user.target_weight ?
     user.target_weight - user.current_weight : 0;
 
   return (
@@ -200,14 +257,14 @@ export default function ProfilePage() {
                       <div className="mt-1 text-sm font-medium">{user.name || 'Not set'}</div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="email">Email</Label>
                     <div className="mt-1 text-sm font-medium text-muted-foreground">
                       {user.email}
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="age">Age</Label>
                     {isEditing ? (
@@ -222,7 +279,7 @@ export default function ProfilePage() {
                       <div className="mt-1 text-sm font-medium">{user.age || 'Not set'}</div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="gender">Gender</Label>
                     {isEditing ? (
@@ -240,7 +297,7 @@ export default function ProfilePage() {
                       <div className="mt-1 text-sm font-medium capitalize">{user.gender || 'Not set'}</div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="height">Height (cm)</Label>
                     {isEditing ? (
@@ -256,7 +313,7 @@ export default function ProfilePage() {
                       <div className="mt-1 text-sm font-medium">{user.height ? `${user.height} cm` : 'Not set'}</div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="current_weight">Current Weight (kg)</Label>
                     {isEditing ? (
@@ -272,7 +329,7 @@ export default function ProfilePage() {
                       <div className="mt-1 text-sm font-medium">{user.current_weight ? `${user.current_weight} kg` : 'Not set'}</div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="target_weight">Target Weight (kg)</Label>
                     {isEditing ? (
@@ -288,7 +345,7 @@ export default function ProfilePage() {
                       <div className="mt-1 text-sm font-medium">{user.target_weight ? `${user.target_weight} kg` : 'Not set'}</div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="activity_level">Activity Level</Label>
                     {isEditing ? (
@@ -308,7 +365,7 @@ export default function ProfilePage() {
                       <div className="mt-1 text-sm font-medium">{activityLevelLabel || 'Not set'}</div>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="fitness_goal">Fitness Goal</Label>
                     {isEditing ? (
@@ -331,6 +388,18 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Calorie & Macro Planner */}
+            <CalorieMacroPlanner
+              currentWeight={user.current_weight}
+              height={user.height}
+              age={user.age}
+              gender={user.gender}
+              activityLevel={user.activity_level}
+              fitnessGoal={user.fitness_goal}
+              onImplementAdjustment={handleImplementAdjustment}
+              onRevertToBase={handleRevertToBase}
+            />
           </div>
 
           {/* Stats & Goals */}
@@ -350,7 +419,7 @@ export default function ProfilePage() {
                   </div>
                   <div className="text-sm text-muted-foreground">Calories</div>
                 </div>
-                
+
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 bg-muted rounded">
                     <div className="font-semibold">{user.target_protein || 0}g</div>

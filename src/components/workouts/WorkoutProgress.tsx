@@ -25,7 +25,7 @@ interface WorkoutProgressProps {
 }
 
 export function WorkoutProgress({ refreshTrigger }: WorkoutProgressProps) {
-  const [selectedWorkout, setSelectedWorkout] = useState('');
+  const [selectedWorkout, setSelectedWorkout] = useState<string>('');
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
   const [workoutOptions, setWorkoutOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,8 +37,10 @@ export function WorkoutProgress({ refreshTrigger }: WorkoutProgressProps) {
       try {
         const response = await fetch('/api/workouts');
         if (response.ok) {
-          const workouts = await response.json();
-          const uniqueWorkouts = [...new Set(workouts.map((w: any) => w.workout_name))];
+          const workouts: Array<{ workout_name: string }> = await response.json();
+          const workoutNames = workouts.map(w => w.workout_name);
+          const uniqueWorkoutsSet = new Set(workoutNames);
+          const uniqueWorkouts = Array.from(uniqueWorkoutsSet);
           setWorkoutOptions(uniqueWorkouts);
           if (uniqueWorkouts.length > 0 && !selectedWorkout) {
             setSelectedWorkout(uniqueWorkouts[0]);
@@ -50,7 +52,7 @@ export function WorkoutProgress({ refreshTrigger }: WorkoutProgressProps) {
     };
 
     fetchWorkouts();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, selectedWorkout]);
 
   // Fetch progress data for selected workout
   useEffect(() => {

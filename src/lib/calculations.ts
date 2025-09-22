@@ -1,4 +1,4 @@
-import { ActivityLevel, FitnessGoal } from '@/types';
+import { ActivityLevel, FitnessGoal, CalorieAdjustment, BasePlan, AdjustedPlan } from '@/types';
 
 export const activityLevels: ActivityLevel[] = [
   { value: 'sedentary', label: 'Sedentary (little/no exercise)', multiplier: 1.2 },
@@ -11,7 +11,8 @@ export const activityLevels: ActivityLevel[] = [
 export const fitnessGoals: FitnessGoal[] = [
   { value: 'lose', label: 'Lose weight', calorieAdjustment: -500 },
   { value: 'maintain', label: 'Maintain weight', calorieAdjustment: 0 },
-  { value: 'gain', label: 'Gain weight', calorieAdjustment: 500 }
+  { value: 'gain', label: 'Gain weight', calorieAdjustment: 500 },
+  { value: 'recomposition', label: 'Body recomposition', calorieAdjustment: -200 }
 ];
 
 // Mifflin-St Jeor Equation
@@ -28,34 +29,65 @@ export function calculateTDEE(bmr: number, activityLevel: string): number {
   return bmr * (activity?.multiplier || 1.2);
 }
 
-export function calculateTargetCalories(tdee: number, goal: string, currentWeight?: number, targetWeight?: number): number {
-  const goalObj = fitnessGoals.find(g => g.value === goal);
-  let calorieAdjustment = goalObj?.calorieAdjustment || 0;
-  
-  // If we have both current and target weight, calculate more precise calorie adjustment
-  if (currentWeight && targetWeight && currentWeight !== targetWeight) {
-    const weightDifference = targetWeight - currentWeight;
-    
-    if (weightDifference < 0) {
-      // Losing weight: create larger deficit for faster loss if desired
-      calorieAdjustment = Math.max(-750, weightDifference * 50); // Max 750 cal deficit
-    } else if (weightDifference > 0) {
-      // Gaining weight: create surplus
-      calorieAdjustment = Math.min(500, weightDifference * 50); // Max 500 cal surplus
-    }
+export function calculateTargetCalories(
+  tdee: number,
+  goal: string,
+  currentWeight?: number,
+  targetWeight?: number
+): number {
+  let calorieAdjustment = 0;
+
+  if (goal === 'lose') {
+    calorieAdjustment = -500; // Safe deficit
+  } else if (goal === 'gain') {
+    calorieAdjustment = 300; // Moderate surplus
+  } else if (goal === 'maintain') {
+    calorieAdjustment = 0;
+  } else if (goal === 'recomposition') {
+    calorieAdjustment = -200; // Small deficit for fat loss + muscle gain
   }
-  
+
   return Math.round(tdee + calorieAdjustment);
 }
 
-export function calculateMacros(targetCalories: number) {
-  // Standard macro distribution: 30% protein, 40% carbs, 30% fat
-  const protein = Math.round((targetCalories * 0.3) / 4); // 4 calories per gram
-  const carbs = Math.round((targetCalories * 0.4) / 4); // 4 calories per gram
-  const fat = Math.round((targetCalories * 0.3) / 9); // 9 calories per gram
-  
-  return { protein, carbs, fat };
+export function calculateMacros(
+  targetCalories: number,
+  fitnessGoal?: string,
+  bodyWeightKg?: number
+) {
+  // fallback if bodyWeight not passed
+  const weight = bodyWeightKg || Math.round(targetCalories / 30);
+
+  let proteinGrams: number;
+  let fatGrams: number;
+  let carbGrams: number;
+
+  if (fitnessGoal === 'lose') {
+    proteinGrams = Math.round(2.2 * weight);
+    fatGrams = Math.round(0.8 * weight);
+  } else if (fitnessGoal === 'gain') {
+    proteinGrams = Math.round(1.7 * weight);
+    fatGrams = Math.round(1.0 * weight);
+  } else if (fitnessGoal === 'maintain') {
+    proteinGrams = Math.round(1.8 * weight);
+    fatGrams = Math.round(0.9 * weight);
+  } else if (fitnessGoal === 'recomposition') {
+    proteinGrams = Math.round(2.0 * weight);
+    fatGrams = Math.round(0.9 * weight);
+  } else {
+    // default: maintain
+    proteinGrams = Math.round(1.8 * weight);
+    fatGrams = Math.round(0.9 * weight);
+  }
+
+  const proteinCalories = proteinGrams * 4;
+  const fatCalories = fatGrams * 9;
+  const remainingCalories = targetCalories - (proteinCalories + fatCalories);
+  carbGrams = Math.max(0, Math.round(remainingCalories / 4));
+
+  return { protein: proteinGrams, carbs: carbGrams, fat: fatGrams };
 }
+
 
 export function calculateWeightProgress(currentWeight: number, targetWeight: number): {
   weightDifference: number;
@@ -84,5 +116,94 @@ export function calculateWeightProgress(currentWeight: number, targetWeight: num
     progressPercentage,
     isOnTrack,
     timeToGoal
+  };
+}
+// Calorie adjustment options for secondary layer
+export const calorieAdjustments: CalorieAdjustment[] = [
+  { value: 'none', label: 'No Adjustment (default)', adjustment: 0 },
+  { value: 'deficit_200', label: 'Deficit: -200 kcal', adjustment: -200 },
+  { value: 'deficit_400', label: 'Deficit: -400 kcal', adjustment: -400 },
+  { value: 'deficit_600', label: 'Deficit: -600 kcal', adjustment: -600 },
+  { value: 'surplus_200', label: 'Surplus: +200 kcal', adjustment: 200 },
+  { value: 'surplus_400', label: 'Surplus: +400 kcal', adjustment: 400 },
+  { value: 'surplus_600', label: 'Surplus: +600 kcal', adjustment: 600 }
+];
+
+// Calculate base plan (primary layer)
+export function calculateBasePlan(
+  maintenanceCalories: number,
+  fitnessGoal: string,
+  bodyWeightKg: number
+): BasePlan {
+  const goalCalories = calculateTargetCalories(maintenanceCalories, fitnessGoal);
+  const goalName = fitnessGoals.find(g => g.value === fitnessGoal)?.label || 'Unknown Goal';
+  
+  // Calculate macros using the new formula
+  const proteinGrams = Math.round(bodyWeightKg * 2); // 2g per kg
+  const fatCalories = Math.round(goalCalories * 0.25); // 25% of calories
+  const fatGrams = Math.round(fatCalories / 9);
+  
+  const proteinCalories = proteinGrams * 4;
+  const remainingCalories = goalCalories - proteinCalories - fatCalories;
+  const carbGrams = Math.max(0, Math.round(remainingCalories / 4));
+  
+  const proteinPercentage = Math.round((proteinCalories / goalCalories) * 100);
+  const fatPercentage = 25;
+  const carbPercentage = Math.round((remainingCalories / goalCalories) * 100);
+  
+  return {
+    maintenanceCalories,
+    goalCalories,
+    goalName,
+    macros: {
+      protein: { grams: proteinGrams, percentage: proteinPercentage },
+      carbs: { grams: carbGrams, percentage: carbPercentage },
+      fat: { grams: fatGrams, percentage: fatPercentage }
+    }
+  };
+}
+
+// Calculate adjusted plan (secondary layer)
+export function calculateAdjustedPlan(
+  baseCalories: number,
+  adjustment: number,
+  bodyWeightKg: number
+): AdjustedPlan {
+  const adjustedCalories = baseCalories + adjustment;
+  
+  // Calculate expected weekly change
+  const weeklyCalorieChange = adjustment * 7;
+  const weeklyWeightChange = Math.abs(weeklyCalorieChange) / 7700; // 7700 kcal ≈ 1 kg fat
+  
+  let expectedWeeklyChange: string;
+  if (adjustment === 0) {
+    expectedWeeklyChange = 'No change expected';
+  } else if (adjustment < 0) {
+    expectedWeeklyChange = `Expected loss: ~${weeklyWeightChange.toFixed(2)} kg/week`;
+  } else {
+    expectedWeeklyChange = `Expected gain: ~${weeklyWeightChange.toFixed(2)} kg/week`;
+  }
+  
+  // Recalculate macros with adjusted calories
+  const proteinGrams = Math.round(bodyWeightKg * 2); // 2g per kg (fixed)
+  const fatCalories = Math.round(adjustedCalories * 0.25); // 25% of calories
+  const fatGrams = Math.round(fatCalories / 9);
+  
+  const proteinCalories = proteinGrams * 4;
+  const remainingCalories = adjustedCalories - proteinCalories - fatCalories;
+  const carbGrams = Math.max(0, Math.round(remainingCalories / 4));
+  
+  const proteinPercentage = Math.round((proteinCalories / adjustedCalories) * 100);
+  const fatPercentage = 25;
+  const carbPercentage = Math.round((remainingCalories / adjustedCalories) * 100);
+  
+  return {
+    adjustedCalories,
+    expectedWeeklyChange,
+    macros: {
+      protein: { grams: proteinGrams, percentage: proteinPercentage },
+      carbs: { grams: carbGrams, percentage: carbPercentage },
+      fat: { grams: fatGrams, percentage: fatPercentage }
+    }
   };
 }
