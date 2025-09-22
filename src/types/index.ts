@@ -13,6 +13,7 @@ export interface User {
   target_protein?: number;
   target_carbs?: number;
   target_fat?: number;
+  current_adjustment?: string; // Track current calorie adjustment state
   created_at?: string;
   updated_at?: string;
 }

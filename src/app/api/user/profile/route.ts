@@ -117,6 +117,7 @@ export async function PUT(request: NextRequest) {
           name: session.user.name,
           ...profileData,
           ...nutritionTargets,
+          current_adjustment: profileData.current_adjustment || 'none',
         })
         .select()
         .single();

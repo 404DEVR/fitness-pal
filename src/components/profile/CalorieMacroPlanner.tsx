@@ -24,7 +24,9 @@ interface CalorieMacroPlannerProps {
   gender?: string;
   activityLevel?: string;
   fitnessGoal?: string;
-  onImplementAdjustment?: (adjustedPlan: AdjustedPlan) => void;
+  currentTargetCalories?: number;
+  currentAdjustment?: string; // Track current adjustment state
+  onImplementAdjustment?: (adjustedPlan: AdjustedPlan, adjustmentType: string) => void;
   onRevertToBase?: (basePlan: BasePlan) => void;
 }
 
@@ -35,11 +37,12 @@ export default function CalorieMacroPlanner({
   gender,
   activityLevel,
   fitnessGoal,
+  currentAdjustment,
   onImplementAdjustment,
   onRevertToBase
 }: CalorieMacroPlannerProps) {
   const [basePlan, setBasePlan] = useState<BasePlan | null>(null);
-  const [selectedAdjustment, setSelectedAdjustment] = useState('none');
+  const [selectedAdjustment, setSelectedAdjustment] = useState(currentAdjustment || 'none');
   const [adjustedPlan, setAdjustedPlan] = useState<AdjustedPlan | null>(null);
   const [isImplemented, setIsImplemented] = useState(false);
   const [isImplementing, setIsImplementing] = useState(false);
@@ -53,6 +56,14 @@ export default function CalorieMacroPlanner({
       setBasePlan(base);
     }
   }, [currentWeight, height, age, gender, activityLevel, fitnessGoal]);
+
+  // Set initial adjustment state and check if already implemented
+  useEffect(() => {
+    if (currentAdjustment && currentAdjustment !== 'none') {
+      setSelectedAdjustment(currentAdjustment);
+      setIsImplemented(true);
+    }
+  }, [currentAdjustment]);
 
   // Calculate adjusted plan when adjustment changes
   useEffect(() => {
@@ -81,7 +92,7 @@ export default function CalorieMacroPlanner({
     
     setIsImplementing(true);
     try {
-      await onImplementAdjustment?.(adjustedPlan);
+      await onImplementAdjustment?.(adjustedPlan, selectedAdjustment);
       setIsImplemented(true);
     } catch (error) {
       console.error('Failed to implement adjustment:', error);

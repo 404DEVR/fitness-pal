@@ -118,7 +118,7 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
-  const handleImplementAdjustment = async (adjustedPlan: AdjustedPlan) => {
+  const handleImplementAdjustment = async (adjustedPlan: AdjustedPlan, adjustmentType: string) => {
     try {
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
@@ -130,6 +130,7 @@ export default function ProfilePage() {
           target_protein: adjustedPlan.macros.protein.grams,
           target_carbs: adjustedPlan.macros.carbs.grams,
           target_fat: adjustedPlan.macros.fat.grams,
+          current_adjustment: adjustmentType,
         }),
       });
 
@@ -158,6 +159,7 @@ export default function ProfilePage() {
           target_protein: basePlan.macros.protein.grams,
           target_carbs: basePlan.macros.carbs.grams,
           target_fat: basePlan.macros.fat.grams,
+          current_adjustment: 'none',
         }),
       });
 
@@ -397,6 +399,7 @@ export default function ProfilePage() {
               gender={user.gender}
               activityLevel={user.activity_level}
               fitnessGoal={user.fitness_goal}
+              currentAdjustment={user.current_adjustment}
               onImplementAdjustment={handleImplementAdjustment}
               onRevertToBase={handleRevertToBase}
             />
